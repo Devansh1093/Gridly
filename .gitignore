@@ -13,3 +13,4 @@ __pycache__/
 .venv/
 *.md
 *.MD
+!README.md
