@@ -1,0 +1,36 @@
+{
+  "abi": [
+    { "type": "constructor", "inputs": [{ "name": "signer", "type": "address", "internalType": "address" }], "stateMutability": "nonpayable" },
+    { "type": "function", "name": "recordTrade", "stateMutability": "nonpayable", "inputs": [{ "name": "trade", "type": "tuple", "internalType": "struct EnergyTradeRegistry.Trade", "components": [
+      { "name": "tradeId", "type": "bytes32", "internalType": "bytes32" },
+      { "name": "buyer", "type": "address", "internalType": "address" },
+      { "name": "seller", "type": "address", "internalType": "address" },
+      { "name": "energyWh", "type": "uint256", "internalType": "uint256" },
+      { "name": "priceCentsPerKwh", "type": "uint256", "internalType": "uint256" },
+      { "name": "totalCostCents", "type": "uint256", "internalType": "uint256" },
+      { "name": "validUntil", "type": "uint64", "internalType": "uint64" },
+      { "name": "carbonDiffDeciGrams", "type": "int256", "internalType": "int256" },
+      { "name": "carbonComparisonStatus", "type": "uint8", "internalType": "uint8" },
+      { "name": "baselineFactorHash", "type": "bytes32", "internalType": "bytes32" },
+      { "name": "scenarioFactorHash", "type": "bytes32", "internalType": "bytes32" },
+      { "name": "scoreConfigHash", "type": "bytes32", "internalType": "bytes32" }
+    ] }, { "name": "authorizationSignature", "type": "bytes", "internalType": "bytes" }], "outputs": [] },
+    { "type": "function", "name": "tradeExists", "stateMutability": "view", "inputs": [{ "name": "tradeId", "type": "bytes32", "internalType": "bytes32" }], "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }] },
+    { "type": "function", "name": "authorizationSigner", "stateMutability": "view", "inputs": [], "outputs": [{ "name": "", "type": "address", "internalType": "address" }] },
+    { "type": "event", "name": "TradeRecorded", "anonymous": false, "inputs": [
+      { "name": "tradeId", "type": "bytes32", "indexed": true, "internalType": "bytes32" },
+      { "name": "buyer", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "seller", "type": "address", "indexed": true, "internalType": "address" },
+      { "name": "energyWh", "type": "uint256", "indexed": false, "internalType": "uint256" },
+      { "name": "priceCentsPerKwh", "type": "uint256", "indexed": false, "internalType": "uint256" },
+      { "name": "totalCostCents", "type": "uint256", "indexed": false, "internalType": "uint256" },
+      { "name": "validUntil", "type": "uint64", "indexed": false, "internalType": "uint64" },
+      { "name": "carbonDiffDeciGrams", "type": "int256", "indexed": false, "internalType": "int256" },
+      { "name": "carbonComparisonStatus", "type": "uint8", "indexed": false, "internalType": "uint8" },
+      { "name": "baselineFactorHash", "type": "bytes32", "indexed": false, "internalType": "bytes32" },
+      { "name": "scenarioFactorHash", "type": "bytes32", "indexed": false, "internalType": "bytes32" },
+      { "name": "scoreConfigHash", "type": "bytes32", "indexed": false, "internalType": "bytes32" },
+      { "name": "recordedAt", "type": "uint64", "indexed": false, "internalType": "uint64" }
+    ] }
+  ]
+}

@@ -1,0 +1,15 @@
+.env
+.env.*.local
+node_modules/
+dist/
+app/backend/data/
+app/contracts/artifacts/
+app/contracts/cache/
+app/contracts/deployments/*.json
+.hardhat-data/
+app/contracts/.hardhat-data/
+__pycache__/
+*.py[cod]
+.venv/
+*.md
+*.MD

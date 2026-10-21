@@ -1,0 +1,23 @@
+{
+  "name": "p2p-energy-trading-demo",
+  "private": true,
+  "workspaces": ["app/frontend"],
+  "scripts": {
+    "setup:local": "node scripts/setup-local.mjs",
+    "dev": "concurrently -k -n API,WEB -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node scripts/run-backend.mjs",
+    "dev:web": "npm --workspace frontend run dev",
+    "build": "npm --workspace frontend run build",
+    "seed": "node scripts/seed.mjs",
+    "chain": "hardhat --config app/contracts/hardhat.config.cjs node",
+    "compile:contract": "hardhat --config app/contracts/hardhat.config.cjs compile",
+    "deploy:local": "hardhat --config app/contracts/hardhat.config.cjs run app/contracts/scripts/deploy.cjs --network localhost"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.5",
+    "hardhat": "^2.22.17"
+  }
+}
