@@ -1,108 +1,34 @@
-# Gridly · P2P Energy Trading
+﻿# Gridly — P2P Energy Trading
 
-Gridly is a web application for peer-to-peer electricity listings, deterministic carbon-aware matching, and an EVM audit registry. It uses fixture data and records submitted trade fields; it does not transfer funds or verify physical energy delivery.
+Gridly is a public demo of peer-to-peer electricity trading. It helps communities compare energy listings using an explainable, deterministic matcher that considers price, quantity, and estimated carbon intensity.
 
-## Architecture
+## Try the public demo
 
-- `app/frontend`: React, TypeScript, Vite, Tailwind CSS, Lucide, and ethers.js. The browser wallet submits the contract call.
-- `app/backend`: FastAPI, Pydantic, SQLAlchemy, and SQLite for the local demo. It publishes listings, previews matches, reserves quantity, signs EIP-712 authorization permits, verifies chain submissions, reconciles status, and serves dashboard metrics.
-- `app/contracts`: Solidity `EnergyTradeRegistry` with duplicate prevention, deadline checks, a backend authorization signer, and a complete audit event.
-- `docs`: frontend, backend, and architecture requirements.
+- **App:** [gridly-beta-eosin.vercel.app](https://gridly-beta-eosin.vercel.app/)
+- **API health:** [gridly-ydgb.onrender.com/api/v1/health](https://gridly-ydgb.onrender.com/api/v1/health)
+- Choose a scenario (sunny day, low generation, or demand spike), browse listings, and explore match previews.
 
-The default seed is deterministic (`seed.v1`), and all market matching uses one scenario at a time. The dashboard can explicitly aggregate completed trades across scenarios.
+The public app uses labelled simulated fixtures. Carbon and emissions figures are estimates, not measurements. The demo does not verify physical electricity delivery or transfer real funds. The API is live, but `chain_configured` is currently `false`; public wallet submission and on-chain trade recording are not enabled. Please do not interpret a match preview as a completed trade.
 
-## Local setup
+Render's free service may take a little time to wake after inactivity. The hosted database is for this demo and should not be treated as long-term storage.
 
-Requirements: Node.js 20+, npm, and Python 3.11+.
+## How it works
 
-1. From this directory, install Node dependencies:
+- **Frontend:** React, TypeScript, and Vite, hosted on Vercel.
+- **API:** FastAPI and SQLAlchemy, hosted on Render with PostgreSQL.
+- **Matching:** fixed, versioned scoring supports carbon-aware and price-only comparisons, with explicit factor sources and assumptions.
+- **Smart contract:** Solidity trade registry with a local Hardhat development workflow. Public chain integration is not currently configured.
 
-   ```sh
-   npm install
-   ```
+The API loads deterministic seed data when its database is empty. Listings are isolated by scenario. Matching previews are read-only; estimated emissions comparisons use the documented regional baseline and factor basis. An on-chain record, when enabled in a configured environment, records submitted trade data and does not prove physical delivery.
 
-2. Create a Python virtual environment and install the API dependencies:
+## Data and assumptions
 
-   ```powershell
-   py -3 -m venv .venv
-   .\.venv\Scripts\python.exe -m pip install -r app\backend\requirements.txt
-   ```
+Carbon factors are demo fixtures, not a live carbon-data feed. The Turkish grid factor is 414.2 gCO₂/kWh (IEA 2025 edition, as republished by ABB; declared data year 2023). IPCC lifecycle figures are informational and are kept separate from combustion-based comparisons. Check the cited source and assumptions before using these factors outside the demo.
 
-   On macOS or Linux, use `python3 -m venv .venv` and `.venv/bin/python -m pip install -r app/backend/requirements.txt`.
+## Source code
 
-3. Generate local-only signing secrets and a `.env` file:
+The repository includes the frontend, API, contract, deployment configuration, and detailed design notes in `docs/`. Local development and contract deployment instructions are in the project documentation.
 
-   ```sh
-   npm run setup:local
-   ```
+## Public deployment configuration
 
-   The generated private signer key is used only to authorize demo trades on the local chain. `.env` is ignored by Git. Never reuse it on a public network or with funded accounts.
-
-4. Start a local Hardhat node in terminal 1:
-
-   ```sh
-   npm run chain
-   ```
-
-5. Deploy the registry in terminal 2:
-
-   ```sh
-   npm run deploy:local
-   ```
-
-   The command deploys to `localhost`, stores the local address in `.env`, and writes a Git-ignored deployment record. If using MetaMask, add the local Hardhat network (RPC `http://127.0.0.1:8545`, chain ID `31337`) and import one of the local accounts printed by Hardhat. Never use a real wallet key.
-
-6. Load the demo fixtures if needed, then start the API and frontend in terminal 3:
-
-   ```sh
-   npm run seed -- --reset --scenario all
-   npm run dev
-   ```
-
-   Open `http://127.0.0.1:5173`. The API is at `http://127.0.0.1:8000`; interactive API docs are at `http://127.0.0.1:8000/docs`.
-
-If PowerShell blocks `npm.ps1`, run the same commands with `npm.cmd` (for example, `npm.cmd run dev`).
-
-## Useful commands
-
-```sh
-npm run seed -- --reset --scenario sunny-day
-npm run seed -- --reset --scenario low-generation
-npm run seed -- --reset --scenario demand-spike
-npm run seed -- --reset --scenario all
-npm run compile:contract
-npm run build
-```
-
-Seed reset clears participants, listings, requests, and trade reservations in SQLite; it never changes chain state. Redeploy the contract or restart the Hardhat node separately for a clean chain history. Seed quantities are entered in kWh and persisted as integer Wh. Prices are integer EUR cents/kWh.
-
-## Demo behavior
-
-- Preview is read-only and returns a bounded-lifetime signed token plus a snapshot hash. Acceptance requires an idempotency key and reserves both the sell listing and buy request in one transaction.
-- Ranking uses versioned integer basis-point scoring. `price_only` uses price and quantity fit; `carbon_aware` adds the seller scenario intensity. Baseline availability only affects the emissions comparison.
-- The browser signs and submits `recordTrade`. The API registers the transaction hash, checks the destination and call payload, and marks a trade `Done` only after a finalized receipt and event verification.
-- `Offer` means ready for wallet submission, `Pending` means submitted and awaiting verification, `Done` means verified on chain, and `Fail` records a terminal failure. A transaction hash that is merely missing is never treated as proof of failure.
-- Carbon factors show their source, basis, region and simulated-data label. The IEA/ABB TR factor uses 414.2 gCO₂/kWh (2023 data year, 2025 edition); IPCC lifecycle values remain informational and are excluded from the combustion comparison.
-
-## Configuration
-
-Copy `.env.example` only as a reference; `npm run setup:local` creates the usable local `.env`. `PREVIEW_TOKEN_SIGNING_KEY` and `TRADE_AUTH_SIGNER_PRIVATE_KEY` are backend-only values. Only `VITE_*` settings are exposed to the browser. The API refuses to issue previews without a sufficiently long signing key and refuses wallet preparation until a local contract and signer are configured.
-
-No real carbon provider is connected. Carbon factors are reproducible demo fixtures; estimated emissions are estimates, and the chain event records submitted data rather than proving delivery.
-
-## Public deployment (Vercel + Render)
-
-The repository includes a Vercel config for the Vite frontend and a Render Blueprint for the FastAPI API and PostgreSQL database. Deploy the GitHub repository to Render first using `render.yaml`, then set its `FRONTEND_ORIGINS` to the Vercel production URL. Deploy the same repository to Vercel with the project root left at the repository root and set `VITE_API_BASE_URL` to `https://<your-render-service>.onrender.com`.
-
-The default Hardhat network is local-only. Sepolia deployment is also configured. To deploy the registry, create a dedicated deployer wallet for Sepolia and a separate backend authorization signer. Fund only the deployer with Sepolia test ETH. Generate a fresh authorization signer key for public deployment (do not reuse the local-demo key from `npm run setup:local`), then set `SEPOLIA_RPC_URL`, `SEPOLIA_DEPLOYER_PRIVATE_KEY`, and that new `TRADE_AUTH_SIGNER_PRIVATE_KEY` in the ignored local `.env`. Keep a secure copy of the authorization key for Render. Then run:
-
-```sh
-npm run compile:contract
-npm run deploy:sepolia
-```
-
-The command checks that the RPC is Sepolia (chain ID `11155111`), deploys the contract, updates the ignored local `.env`, and writes `app/contracts/deployments/sepolia.json` (also ignored). Use that address and chain ID for the host settings. Render needs `RPC_URL`, `CHAIN_ID`, `CONTRACT_ADDRESS`, and the same `TRADE_AUTH_SIGNER_PRIVATE_KEY` used when deploying the registry. Vercel needs `VITE_CHAIN_ID`, `VITE_CONTRACT_ADDRESS`, and `VITE_RPC_URL`; the RPC endpoint is visible to browsers, so use a public endpoint or restrict its API key to your site. Never put either private key in GitHub or Vercel.
-
-`PREVIEW_TOKEN_SIGNING_KEY` is backend-only and Render generates it in the Blueprint. The API seeds fixture data on first startup when the database is empty.
-
-Render's free web services can spin down when idle, and its free PostgreSQL plan is temporary; check the provider's current limits before relying on it for a long-lived public demo. Avoid exposing administrative seed/reset commands or credentials publicly.
+The live frontend is configured with `VITE_API_BASE_URL` pointing to the Render API. Render's `FRONTEND_ORIGINS` must include the exact Vercel production origin. For another deployment, configure these values in the hosting dashboards and redeploy the frontend after changing its Vite variable; Vite embeds it during the build. Never place private keys or API credentials in the frontend or source control.
