@@ -1,6 +1,6 @@
-# Gridly · P2P energy trading demo
+# Gridly · P2P Energy Trading
 
-Gridly is a demo for peer-to-peer electricity listings, deterministic carbon-aware matching, and an EVM audit registry. It uses fixture data and records submitted trade fields; it does not transfer funds or verify physical energy delivery.
+Gridly is a web application for peer-to-peer electricity listings, deterministic carbon-aware matching, and an EVM audit registry. It uses fixture data and records submitted trade fields; it does not transfer funds or verify physical energy delivery.
 
 ## Architecture
 
