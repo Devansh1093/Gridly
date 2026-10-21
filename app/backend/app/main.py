@@ -286,9 +286,10 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Gridly P2P Energy Trading API", version="1.0.0", lifespan=lifespan)
+frontend_origins = [origin.strip() for origin in settings.frontend_origins.split(",") if origin.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_origins=frontend_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "Idempotency-Key"],
