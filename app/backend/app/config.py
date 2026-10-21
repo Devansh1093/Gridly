@@ -25,10 +25,12 @@ class Settings(BaseSettings):
     @field_validator("database_url", mode="before")
     @classmethod
     def normalize_database_url(cls, value):
-        # Render provides postgres:// URLs while SQLAlchemy's psycopg dialect
-        # expects postgresql:// (or postgresql+psycopg://).
+        # Render provides postgres:// URLs. Pin SQLAlchemy to the installed
+        # psycopg v3 driver instead of its default psycopg2 driver.
         if isinstance(value, str) and value.startswith("postgres://"):
-            return "postgresql://" + value.removeprefix("postgres://")
+            return "postgresql+psycopg://" + value.removeprefix("postgres://")
+        if isinstance(value, str) and value.startswith("postgresql://"):
+            return "postgresql+psycopg://" + value.removeprefix("postgresql://")
         return value
 
     @model_validator(mode="after")

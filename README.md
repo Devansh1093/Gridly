@@ -94,6 +94,15 @@ No real carbon provider is connected. Carbon factors are reproducible demo fixtu
 
 The repository includes a Vercel config for the Vite frontend and a Render Blueprint for the FastAPI API and PostgreSQL database. Deploy the GitHub repository to Render first using `render.yaml`, then set its `FRONTEND_ORIGINS` to the Vercel production URL. Deploy the same repository to Vercel with the project root left at the repository root and set `VITE_API_BASE_URL` to `https://<your-render-service>.onrender.com`.
 
-The app's default Hardhat network is local-only. To enable public wallet trades, deploy `EnergyTradeRegistry` to a supported public testnet and configure the backend's `RPC_URL`, `CHAIN_ID`, `CONTRACT_ADDRESS`, and backend-only `TRADE_AUTH_SIGNER_PRIVATE_KEY`; configure Vercel's `VITE_CHAIN_ID`, `VITE_CONTRACT_ADDRESS`, and `VITE_RPC_URL` to the same testnet. Use a dedicated testnet signer and RPC endpoint, never a funded wallet key. `PREVIEW_TOKEN_SIGNING_KEY` is backend-only and Render generates it in the Blueprint. Re-seed the Render database after first deployment with `npm run seed -- --reset --scenario all` run from a trusted local environment configured to the same database, or use the API's seeded startup behavior for initial fixtures.
+The default Hardhat network is local-only. Sepolia deployment is also configured. To deploy the registry, create a dedicated deployer wallet for Sepolia and a separate backend authorization signer. Fund only the deployer with Sepolia test ETH. Generate a fresh authorization signer key for public deployment (do not reuse the local-demo key from `npm run setup:local`), then set `SEPOLIA_RPC_URL`, `SEPOLIA_DEPLOYER_PRIVATE_KEY`, and that new `TRADE_AUTH_SIGNER_PRIVATE_KEY` in the ignored local `.env`. Keep a secure copy of the authorization key for Render. Then run:
+
+```sh
+npm run compile:contract
+npm run deploy:sepolia
+```
+
+The command checks that the RPC is Sepolia (chain ID `11155111`), deploys the contract, updates the ignored local `.env`, and writes `app/contracts/deployments/sepolia.json` (also ignored). Use that address and chain ID for the host settings. Render needs `RPC_URL`, `CHAIN_ID`, `CONTRACT_ADDRESS`, and the same `TRADE_AUTH_SIGNER_PRIVATE_KEY` used when deploying the registry. Vercel needs `VITE_CHAIN_ID`, `VITE_CONTRACT_ADDRESS`, and `VITE_RPC_URL`; the RPC endpoint is visible to browsers, so use a public endpoint or restrict its API key to your site. Never put either private key in GitHub or Vercel.
+
+`PREVIEW_TOKEN_SIGNING_KEY` is backend-only and Render generates it in the Blueprint. The API seeds fixture data on first startup when the database is empty.
 
 Render's free web services can spin down when idle, and its free PostgreSQL plan is temporary; check the provider's current limits before relying on it for a long-lived public demo. Avoid exposing administrative seed/reset commands or credentials publicly.

@@ -11,7 +11,8 @@
     "seed": "node scripts/seed.mjs",
     "chain": "hardhat --config app/contracts/hardhat.config.cjs node",
     "compile:contract": "hardhat --config app/contracts/hardhat.config.cjs compile",
-    "deploy:local": "hardhat --config app/contracts/hardhat.config.cjs run app/contracts/scripts/deploy.cjs --network localhost"
+    "deploy:local": "hardhat --config app/contracts/hardhat.config.cjs run app/contracts/scripts/deploy.cjs --network localhost",
+    "deploy:sepolia": "hardhat --config app/contracts/hardhat.config.cjs run app/contracts/scripts/deploy.cjs --network sepolia"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.8",

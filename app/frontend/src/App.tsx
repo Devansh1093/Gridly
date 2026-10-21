@@ -22,6 +22,7 @@ const SCENARIOS: Array<{ id: Scenario; label: string; note: string }> = [
   { id: "demand-spike", label: "Demand spike", note: "Higher demand" },
 ];
 const STATUS_CLASS: Record<string, string> = { Offer: "status offer", Pending: "status pending", Done: "status done", Fail: "status fail" };
+function chainName(chainId: number) { return chainId === 11155111 ? "Sepolia" : chainId === 31337 ? "Hardhat Local" : `EVM network ${chainId}`; }
 
 function initials(name: string) { return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase(); }
 function shortHash(hash: string | null | undefined) { return hash ? `${hash.slice(0, 9)}…${hash.slice(-7)}` : "Not submitted"; }
@@ -161,7 +162,7 @@ export default function App() {
   const submitToWallet = async (trade: TradeRecord) => {
     setSubmittingId(trade.id); setWalletError("");
     try {
-      if (!window.ethereum) throw new Error("No browser wallet found. Install a wallet such as MetaMask, then connect to the local Hardhat network.");
+      if (!window.ethereum) throw new Error("No browser wallet found. Install a wallet such as MetaMask and connect it to the configured test network.");
       const [{ BrowserProvider, Contract, toBeHex }, registryArtifact] = await Promise.all([
         import("ethers"), import("../../contracts/abi/TradeRegistry.json"),
       ]);
@@ -175,10 +176,10 @@ export default function App() {
         } catch (switchError: any) {
           if (switchError?.code === 4902) {
             await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{
-              chainId: toBeHex(desiredChain), chainName: "Hardhat Local", rpcUrls: [import.meta.env.VITE_RPC_URL || "http://127.0.0.1:8545"],
-              nativeCurrency: { name: "Test Ether", symbol: "ETH", decimals: 18 },
+              chainId: toBeHex(desiredChain), chainName: chainName(desiredChain), rpcUrls: [import.meta.env.VITE_RPC_URL || "http://127.0.0.1:8545"],
+              nativeCurrency: { name: desiredChain === 11155111 ? "Sepolia Ether" : "Test Ether", symbol: "ETH", decimals: 18 },
             }] });
-          } else throw new Error("Switch your wallet to the local Hardhat network (chain 31337) and try again.");
+          } else throw new Error(`Switch your wallet to ${chainName(desiredChain)} (chain ${desiredChain}) and try again.`);
         }
         provider = new BrowserProvider(window.ethereum as any);
         network = await provider.getNetwork();
@@ -237,7 +238,7 @@ export default function App() {
   const connectWallet = async () => {
     setWalletError("");
     try {
-      if (!window.ethereum) throw new Error("No browser wallet found. Install MetaMask to connect a local demo account.");
+      if (!window.ethereum) throw new Error("No browser wallet found. Install MetaMask to connect a demo account.");
       const { BrowserProvider } = await import("ethers");
       const provider = new BrowserProvider(window.ethereum as any);
       const accounts = await provider.send("eth_requestAccounts", []);
@@ -265,7 +266,7 @@ export default function App() {
         <div className="sidebar-spacer" />
         <div className="network-card">
           <span className={`network-dot ${chainReady ? "online" : ""}`} />
-          <div><strong>{chainReady ? "Local chain connected" : chainConfigured ? "Contract configured" : "Contract not deployed"}</strong><small>{chainReady ? `Hardhat · chain ${import.meta.env.VITE_CHAIN_ID || 31337}` : chainConfigured ? "Start the local Hardhat node" : "Run the local deploy command"}</small></div>
+          <div><strong>{chainReady ? `${chainName(Number(import.meta.env.VITE_CHAIN_ID || 31337))} connected` : chainConfigured ? "Contract configured" : "Contract not deployed"}</strong><small>{chainReady ? `Chain ${import.meta.env.VITE_CHAIN_ID || 31337}` : chainConfigured ? "Check the API chain connection" : "Deploy the contract to configure wallet trades"}</small></div>
           {chainReady ? <ShieldCheck size={17} /> : <CircleHelpIcon />}
         </div>
         <div className="sidebar-footer">P2P energy marketplace <span>Demo environment</span></div>
@@ -279,7 +280,7 @@ export default function App() {
             <label className="scenario-picker"><Sun size={15} /><select value={scenario} onChange={(event) => updateScenario(event.target.value as Scenario)} aria-label="Demo scenario">
               {SCENARIOS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select><ChevronDown size={13} /></label>
-            <button className={`wallet-button ${walletAddress ? "connected" : ""}`} onClick={walletAddress ? undefined : connectWallet} title={walletAddress || "Connect a local browser wallet"}>
+            <button className={`wallet-button ${walletAddress ? "connected" : ""}`} onClick={walletAddress ? undefined : connectWallet} title={walletAddress || "Connect a browser wallet"}>
               <Wallet size={16} />{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "Connect wallet"}
             </button>
           </div>
@@ -484,7 +485,7 @@ function ScorePill({ label, value }: { label: string; value: number | null }) {
 
 function AcceptedTrade({ trade, onSubmit, submitting }: { trade: TradeRecord; onSubmit: () => void; submitting: boolean }) {
   const [reviewing, setReviewing] = useState(false);
-  return <><section className="accepted-panel panel"><div className="accepted-icon"><Check size={18} /></div><div className="accepted-copy"><p className="section-label">Reservation created · {trade.id}</p><h3>Ready for wallet submission</h3><p>Quantity is reserved. The trade is not complete until the backend verifies the local-chain receipt.</p></div><div className="accepted-state"><StatusBadge status={trade.status} /><strong>{formatKwh(trade.energy_wh)}</strong><span>{formatEuroCents(trade.total_cost_cents)}</span></div><button className="button primary" onClick={() => setReviewing(true)} disabled={submitting || trade.status !== "Offer"}>{submitting ? <Loader2 className="spin" size={16} /> : <Wallet size={16} />}{submitting ? "Submitting…" : "Submit to wallet"}</button></section>{reviewing && <TradeReviewDialog trade={trade} onCancel={() => setReviewing(false)} onConfirm={() => { setReviewing(false); onSubmit(); }} />}</>;
+  return <><section className="accepted-panel panel"><div className="accepted-icon"><Check size={18} /></div><div className="accepted-copy"><p className="section-label">Reservation created · {trade.id}</p><h3>Ready for wallet submission</h3><p>Quantity is reserved. The trade is not complete until the backend verifies the on-chain receipt.</p></div><div className="accepted-state"><StatusBadge status={trade.status} /><strong>{formatKwh(trade.energy_wh)}</strong><span>{formatEuroCents(trade.total_cost_cents)}</span></div><button className="button primary" onClick={() => setReviewing(true)} disabled={submitting || trade.status !== "Offer"}>{submitting ? <Loader2 className="spin" size={16} /> : <Wallet size={16} />}{submitting ? "Submitting…" : "Submit to wallet"}</button></section>{reviewing && <TradeReviewDialog trade={trade} onCancel={() => setReviewing(false)} onConfirm={() => { setReviewing(false); onSubmit(); }} />}</>;
 }
 
 function ProposalReviewDialog({ proposal, onCancel, onConfirm }: { proposal: Proposal; onCancel: () => void; onConfirm: () => void }) {
@@ -497,9 +498,9 @@ function ProposalReviewDialog({ proposal, onCancel, onConfirm }: { proposal: Pro
 
 function TradeReviewDialog({ trade, onCancel, onConfirm }: { trade: TradeRecord; onCancel: () => void; onConfirm: () => void }) {
   const chainId = Number(import.meta.env.VITE_CHAIN_ID || 31337);
-  return <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onCancel(); }}><section className="review-dialog" role="dialog" aria-modal="true" aria-labelledby="trade-dialog-title"><button className="dialog-close" onClick={onCancel} aria-label="Close review"><X size={17} /></button><p className="section-label">Wallet submission</p><h2 id="trade-dialog-title">Confirm on the local chain</h2><p className="dialog-subtitle">Your wallet will submit an audit record. It does not transfer funds or prove physical energy delivery.</p>
+  return <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onCancel(); }}><section className="review-dialog" role="dialog" aria-modal="true" aria-labelledby="trade-dialog-title"><button className="dialog-close" onClick={onCancel} aria-label="Close review"><X size={17} /></button><p className="section-label">Wallet submission</p><h2 id="trade-dialog-title">Confirm on {chainName(chainId)}</h2><p className="dialog-subtitle">Your wallet will submit an audit record. It does not transfer funds or prove physical energy delivery.</p>
     <div className="dialog-people"><span><small>Buyer</small><b>{trade.buyer_id}</b></span><ArrowLeftRight size={15} /><span><small>Seller</small><b>{trade.seller_id}</b></span></div>
-    <div className="dialog-summary"><div><small>Exact quantity</small><b>{formatKwh(trade.energy_wh)}</b></div><div><small>Seller ask price</small><b>{formatEuroCentsPerKwh(trade.price_cents_per_kwh)}</b></div><div><small>Total cost</small><b>{formatEuroCents(trade.total_cost_cents)}</b></div><div><small>Scenario intensity</small><b>{formatFactor(trade.scenario_factor.value, trade.scenario_factor.unit)}</b></div><div className="dialog-wide"><small>Est. emissions difference · {trade.baseline_factor?.id || "baseline unavailable"}</small><b>{trade.carbon_diff_dg == null ? comparisonLabel(trade.carbon_comparison_status) : formatKgFromDg(trade.carbon_diff_dg, trade.comparison_basis.gas)}</b></div><div className="dialog-wide"><small>Network</small><b>Hardhat local · chain {chainId} · authorization valid until {new Date(trade.valid_until * 1000).toLocaleTimeString()}</b></div></div>
+    <div className="dialog-summary"><div><small>Exact quantity</small><b>{formatKwh(trade.energy_wh)}</b></div><div><small>Seller ask price</small><b>{formatEuroCentsPerKwh(trade.price_cents_per_kwh)}</b></div><div><small>Total cost</small><b>{formatEuroCents(trade.total_cost_cents)}</b></div><div><small>Scenario intensity</small><b>{formatFactor(trade.scenario_factor.value, trade.scenario_factor.unit)}</b></div><div className="dialog-wide"><small>Est. emissions difference · {trade.baseline_factor?.id || "baseline unavailable"}</small><b>{trade.carbon_diff_dg == null ? comparisonLabel(trade.carbon_comparison_status) : formatKgFromDg(trade.carbon_diff_dg, trade.comparison_basis.gas)}</b></div><div className="dialog-wide"><small>Network</small><b>{chainName(chainId)} · chain {chainId} · authorization valid until {new Date(trade.valid_until * 1000).toLocaleTimeString()}</b></div></div>
     <div className="dialog-actions"><button className="button secondary" onClick={onCancel}>Back</button><button className="button primary" onClick={onConfirm}><Wallet size={15} />Open wallet</button></div>
   </section></div>;
 }

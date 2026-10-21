@@ -24,6 +24,8 @@ const defaults = {
   VITE_CHAIN_ID: "31337",
   VITE_CONTRACT_ADDRESS: values.get("CONTRACT_ADDRESS") || "",
   VITE_RPC_URL: "http://127.0.0.1:8545",
+  SEPOLIA_RPC_URL: "",
+  SEPOLIA_DEPLOYER_PRIVATE_KEY: "",
 };
 for (const [key, value] of Object.entries(defaults)) {
   if (!values.has(key) || !values.get(key)) values.set(key, value);
