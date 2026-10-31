@@ -1,4 +1,4 @@
-﻿# Gridly — P2P Energy Trading
+﻿# Gridly: P2P Energy Trading
 
 Gridly is a public demo of peer-to-peer electricity trading. It helps communities compare energy listings using an explainable, deterministic matcher that considers price, quantity, and estimated carbon intensity.
 
